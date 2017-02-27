@@ -1,2 +1,3 @@
-# lemony
-A term based chat client, with server.
+# UISandbox
+
+![Lemony](https://raw.githubusercontent.com/MerreM/UISandbox/master/common/logo47.svg "Lemony")
