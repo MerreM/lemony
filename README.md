@@ -1,3 +1,3 @@
 # Lemony
 
-![Lemony](https://raw.githubusercontent.com/MerreM/UISandbox/master/logo.svg "Lemony")
+![Lemony](https://raw.githubusercontent.com/MerreM/lemony/master/logo.svg "Lemony")
