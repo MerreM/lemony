@@ -1,3 +1,3 @@
 # Lemony
 
-![Lemony](/logo.svg?raw=true "Lemony")
+![Lemony](/logo.png?raw=true "Lemony")
