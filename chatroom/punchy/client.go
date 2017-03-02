@@ -32,6 +32,26 @@ func (c *Client) errorHandler() {
 	panic(err)
 }
 
+func NewUIClient(address *net.UDPAddr) *Client {
+	cAddr, err := net.ResolveUDPAddr("udp", ":")
+	if err != nil {
+		panic(err)
+	}
+	c, err := net.ListenUDP("udp", cAddr)
+	if err != nil {
+		panic(err)
+	}
+
+	client := &Client{
+		make(chan string),
+		make(chan InboundMessage),
+		make(chan error),
+		address, c,
+		make(map[string][]Peer),
+	}
+	return client
+}
+
 func NewClient(hostname string, port *int) *Client {
 	addressString := fmt.Sprintf(hostname+":%v", *port)
 	s, err := net.ResolveUDPAddr("udp", addressString)
@@ -56,7 +76,6 @@ func NewClient(hostname string, port *int) *Client {
 	}
 	go client.errorHandler()
 	return client
-
 }
 
 func (c *Client) ConnectToRoom(inputStream chan string, roomName string) {
@@ -84,7 +103,7 @@ func (c *Client) ConnectToRoom(inputStream chan string, roomName string) {
 	log.Infof("Listening on...%v", c.conn.LocalAddr())
 
 	go c.ClientContiniousWrite(inputStream, roomName)
-	panic(<-c.errorChannel)
+	//	panic(<-c.errorChannel)
 }
 
 func (c *Client) ConnectToMiddleMan() {
@@ -97,8 +116,7 @@ func (c *Client) StartUp(displayChan chan string) {
 }
 
 func (c *Client) Display(displayChan chan string) {
-	for {
-		message := <-c.clientChannel
+	for message := range c.clientChannel {
 		if message.Type() == ROOM_MESSAGE {
 			var chatMessage ChatMessage
 			err := chatMessage.DecodeMessage(message.RawData())
@@ -149,9 +167,7 @@ func (c *Client) Pong() {
 }
 
 func (c *Client) ClientContiniousWrite(messageChan chan string, roomName string) {
-	for {
-		text := <-messageChan
-
+	for text := range messageChan {
 		for _, client := range c.rooms[roomName] {
 			roomMes := &ChatMessage{RoomMessage{roomName}, text}
 			roomData, err := roomMes.EncodeMessage()

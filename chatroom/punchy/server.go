@@ -96,10 +96,13 @@ func (s *Server) RoomWatcher(room *ChatRoom) {
 	for {
 		select {
 		case checkMe := <-room.upTimeQueue:
-			if room.clients[checkMe.String()].lastSeen.Before(time.Now().Add(-60*time.Second)) ||
+			if room.clients[checkMe.String()].lastSeen.Before(time.Now().Add(-60*5*time.Second)) ||
 				room.clients[checkMe.String()].checkCount > 5 {
 				log.Info(checkMe, " disconnected")
 				delete(room.clients, checkMe.String())
+				if len(room.clients) == 0 {
+					return
+				}
 			} else {
 				log.Info("Last seen ", room.clients[checkMe.String()].lastSeen)
 				s.Ping(checkMe)
@@ -126,7 +129,7 @@ func (s *Server) ClientConnectToRoom(message Message) {
 	if err != nil {
 		panic(err)
 	}
-	log.Info("Request for room %s\n", room.Room)
+	log.Infof("Request for room %s\n", room.Room)
 	if s.Rooms[room.Room] == nil {
 		s.Rooms[room.Room] = &ChatRoom{make(map[string]*RemoteClient), make(chan *net.UDPAddr, 10), make(chan *net.UDPAddr, 10)}
 		go s.RoomWatcher(s.Rooms[room.Room])
@@ -138,6 +141,7 @@ func (s *Server) ClientConnectToRoom(message Message) {
 func (s *Server) Serve() {
 	addressString := fmt.Sprintf("%v:%v", "", s.Port)
 	ServerAddr, err := net.ResolveUDPAddr("udp", addressString)
+	log.Info(ServerAddr)
 	if err != nil {
 		panic(err)
 	}
@@ -152,6 +156,7 @@ func (s *Server) Serve() {
 		n, clientAddr, err := s.Conn.ReadFromUDP(buf)
 		var message Message
 		message.DecodeMessage(clientAddr, buf[:n])
+		log.Infof("Message received ", message)
 		switch message.Type() {
 		case CONNECT_TO_ROOM:
 			s.ClientConnectToRoom(message)

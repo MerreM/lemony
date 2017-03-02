@@ -166,17 +166,21 @@ func initChatRoomManager(chatroomClient *punchy.Client) *ChatboxManager {
 
 func (manager *ChatboxManager) updateChatMessages(g *gocui.Gui) {
 	for {
-		message := <-manager.input
-		g.Execute(func(g *gocui.Gui) error {
-			v, err := g.View("chat-box")
-			v.Write([]byte(message + "\n"))
-			if err != nil {
-				log.Error(err)
-				return err
-			}
-			return nil
+		message, more := <-manager.input
+		if more {
+			g.Execute(func(g *gocui.Gui) error {
+				v, err := g.View("chat-box")
+				v.Write([]byte(message + "\n"))
+				if err != nil {
+					log.Error(err)
+					return err
+				}
+				return nil
 
-		})
+			})
+		} else {
+			return
+		}
 	}
 }
 
